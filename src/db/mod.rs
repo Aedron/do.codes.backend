@@ -12,31 +12,7 @@ use self::models::{Post, Comment};
 
 
 
-fn get_coll(coll_name: &str) -> Collection {
-    dotenv().ok();
-    let db_address = env::var("DB_ADDRESS").unwrap();
-    let db_port = env::var("DB_PORT").unwrap();
-    let db_name = env::var("DB_NAME").unwrap();
-
-    let client = Client::connect(
-        &db_address,
-        db_port.parse().unwrap()
-    ).expect("Failed to initialize client.");
-    let coll = client.db(&db_name).collection(coll_name);
-
-    let mut cursor = coll.find(None, None).unwrap();
-    for result in cursor {
-        if let Ok(item) = result {
-            if let Some(&Bson::String(ref title)) = item.get("title") {
-                println!("title: {}", title);
-            }
-        }
-    }
-
-    coll
-}
-
-fn find_from_coll(coll: Collection, doc: OrderedDocument, options: Option<FindOptions>) {
+fn find_from_coll(doc: OrderedDocument, options: Option<FindOptions>, coll: Collection) {
     let mut cursor = coll
         .find(Some(doc), options)
         .ok().expect("Failed to execute find.");
@@ -52,17 +28,40 @@ fn find_from_coll(coll: Collection, doc: OrderedDocument, options: Option<FindOp
     }
 }
 
+pub fn get_coll(coll_name: &str) -> Collection {
+    dotenv().ok();
+    let db_address = env::var("DB_ADDRESS").unwrap();
+    let db_port = env::var("DB_PORT").unwrap();
+    let db_name = env::var("DB_NAME").unwrap();
 
-pub fn get_all_posts() {
+    let client = Client::connect(
+        &db_address,
+        db_port.parse().unwrap()
+    ).expect("Failed to initialize client.");
+    let coll = client.db(&db_name).collection(coll_name);
+
+    let cursor = coll.find(None, None).unwrap();
+    for result in cursor {
+        if let Ok(item) = result {
+            if let Some(&Bson::String(ref title)) = item.get("title") {
+                println!("title: {}", title);
+            }
+        }
+    }
+
+    coll
+}
+
+pub fn get_all_posts(coll: Collection) {
     let collection = get_coll("posts");
     let doc = doc! {
         "title": "Jaws",
         "array": [ 1, 2, 3 ],
     };
-    find_from_coll(collection, doc.clone(), None);
+    find_from_coll(doc.clone(), None, collection);
 }
 
-pub fn new_post(post: &Post) {
+pub fn new_post(post: &Post, coll: Collection) {
     let collection = get_coll("posts");
     let doc = doc! {
         "created": post.created,
