@@ -63,7 +63,6 @@ fn get_posts(req: RequestWithState) -> Result<Json<Vec<Post>>> {
 }
 
 fn create_post(req: RequestWithState) -> Result<Json<RetData<None>>> {
-
 }
 
 fn create_app() -> App<AppState> {
