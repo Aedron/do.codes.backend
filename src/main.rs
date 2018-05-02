@@ -1,30 +1,33 @@
+
 #![feature(plugin)]
 #![plugin(rocket_codegen)]
-#[macro_use(bson, doc)]
 
+#[macro_use(bson, doc)]
 extern crate bson;
 extern crate mongodb;
 extern crate rocket;
+extern crate dotenv;
+
+use rocket::response::content;
 
 mod db;
-use db::{ DB, DBConfig };
-
+use db::models::{Post, Comment};
 
 #[get("/")]
 fn index() -> &'static str {
-    let config = DBConfig {
-        address: String::from("localhost"),
-        host: 27017,
-        db: String::from("blog"),
-        collection: String::from("posts")
+    let post = Post {
+        created: 0,
+        title: String::from("test")
     };
-    let db = DB::connect(config);
+    db::new_post(&post);
     "Hello, world!"
 }
 
+//#[post("/posts", format="application/json", data="<message>")]
+//fn new_post() -> content::Json<&'static str> {
+//
+//}
 
 fn main() {
-    rocket::ignite()
-        .mount("/", routes![index])
-        .launch();
+    rocket::ignite().mount("/", routes![index]).launch();
 }
