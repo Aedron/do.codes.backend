@@ -1,32 +1,27 @@
 
-use bson::{Bson, ordered::{OrderedDocument}};
+use bson::{
+    Bson, ordered::{OrderedDocument},
+    to_bson, UtcDateTime
+};
 use mongodb::{Client, ThreadedClient};
 use mongodb::db::ThreadedDatabase;
-use mongodb::coll::{Collection, options::{FindOptions}};
+use mongodb::{
+    coll::{
+        Collection,
+        options::{FindOptions, CursorType}
+    }
+};
 use dotenv::dotenv;
 use std::env;
 use std::option::Option;
 
 pub mod models;
-use self::models::{Post, Comment};
+pub mod utils;
+
+use self::models::{NewPost, Post, Comment, PostResponse};
+use self::utils::get_timestamp;
 
 
-
-fn find_from_coll(doc: OrderedDocument, options: Option<FindOptions>, coll: Collection) {
-    let mut cursor = coll
-        .find(Some(doc), options)
-        .ok().expect("Failed to execute find.");
-
-    let item = cursor.next();
-    match item {
-        Some(Ok(doc)) => match doc.get("title") {
-            Some(&Bson::String(ref title)) => println!("{}", title),
-            _ => panic!("Expected title to be a string!"),
-        },
-        Some(Err(_)) => panic!("Failed to get next from server!"),
-        None => panic!("Server returned no results!"),
-    }
-}
 
 pub fn get_coll(coll_name: &str) -> Collection {
     dotenv().ok();
@@ -40,34 +35,44 @@ pub fn get_coll(coll_name: &str) -> Collection {
     ).expect("Failed to initialize client.");
     let coll = client.db(&db_name).collection(coll_name);
 
-    let cursor = coll.find(None, None).unwrap();
-    for result in cursor {
-        if let Ok(item) = result {
-            if let Some(&Bson::String(ref title)) = item.get("title") {
-                println!("title: {}", title);
-            }
-        }
-    }
-
     coll
 }
 
-pub fn get_all_posts(coll: Collection) {
-    let collection = get_coll("posts");
-    let doc = doc! {
-        "title": "Jaws",
-        "array": [ 1, 2, 3 ],
-    };
-    find_from_coll(doc.clone(), None, collection);
+pub fn get_posts(count: Option<i32>, skip: Option<i64>, collection: &Collection) -> Vec<Post> {
+    let total = collection.count(None, None);
+    let mut posts = collection
+        .find(None, None)
+        .ok()
+        .unwrap();
+
+    let mut result: Vec<Post> = vec![];
+    for post in posts {
+        if let Ok(doc) = post {
+            let i = Post {
+                created: doc.get_i64("created").unwrap(),
+                edited: doc.get_i64("edited").ok(),
+                title: doc.get_str("title").unwrap().to_string(),
+                tags: doc.get_array("tags").unwrap().iter()
+                    .map(|i| i.as_str().unwrap().to_string()).collect(),
+                content: doc.get_str("content").unwrap().to_string(),
+                comments: None
+            };
+            result.push(i);
+        }
+    }
+    result
 }
 
-pub fn new_post(post: &Post, coll: Collection) {
-    let collection = get_coll("posts");
+pub fn create_post(post: &NewPost, collection: &Collection) {
     let doc = doc! {
-        "created": post.created,
-        "title": &post.title
+        "created": get_timestamp(),
+        "title": post.title.clone(),
+        "tags": to_bson(&post.tags).unwrap(),
+        "content": post.content.clone(),
     };
 
-    collection.insert_one(doc.clone(), None)
-        .ok().expect("Failed to insert document.");
+    collection
+        .insert_one(doc, None)
+        .ok()
+        .expect("Failed to insert document.");
 }

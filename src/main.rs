@@ -12,24 +12,24 @@ extern crate futures;
 extern crate actix_web;
 extern crate actix;
 
-mod db;
+pub mod db;
 
 use std::{
     boxed::Box,
     path::Path,
     collections::HashMap
 };
-use chrono::prelude::*;
 use futures::future::{Future, result};
 use mongodb::coll::{Collection, options::{FindOptions}};
-use db::{
-    get_coll,
-    models::{Post, Comment}
-};
 use actix_web::{
     server::{HttpServer}, http, Error, Json,
     App, HttpRequest, HttpResponse, Result,
-    fs::NamedFile, http::Method
+    fs::NamedFile, http::Method, State
+};
+use db::{
+    get_coll, create_post as create_post_db, get_posts as get_posts_db,
+    models::{NewPost, Post, Comment},
+    utils::get_timestamp
 };
 
 
@@ -38,15 +38,11 @@ struct AppState {
     posts: Collection
 }
 
+#[derive(Deserialize, Serialize)]
 struct RetData<T> {
     code: u8,
-    msg: RetMsg,
+    msg: Option<String>,
     data: Option<T>
-}
-
-enum RetMsg {
-    Success,
-    Error
 }
 
 
@@ -57,12 +53,28 @@ fn index(req: RequestWithState) -> Result<NamedFile> {
     Ok(NamedFile::open(Path::new("static/index.html"))?)
 }
 
-fn get_posts(req: RequestWithState) -> Result<Json<Vec<Post>>> {
-    let posts_coll = req.state().posts;
-    Ok(Json(posts))
+fn get_posts(req: RequestWithState) -> Result<String> {
+    println!("{}", 111);
+    let posts_coll = &req.state().posts;
+    let posts = get_posts_db(Some(0), Some(10), posts_coll);
+    println!("{:?}", posts);
+//    Ok(Json(posts_coll));
+    Ok(String::from("Hello"))
 }
 
-fn create_post(req: RequestWithState) -> Result<Json<RetData<None>>> {
+fn create_post(state: State<AppState>, info: Json<NewPost>) -> Result<Json<RetData<Option<String>>>> {
+    let post = NewPost {
+        title: info.title.clone(),
+        tags: info.tags.clone(),
+        content: info.content.clone()
+    };
+    create_post_db(&post, &state.posts);
+    let ret = RetData {
+        code: 0,
+        msg: Some(String::from("Success")),
+        data: None
+    };
+    Ok(Json(ret))
 }
 
 fn create_app() -> App<AppState> {
@@ -72,6 +84,7 @@ fn create_app() -> App<AppState> {
     App::with_state(app_state)
         .resource("/", |r| r.method(http::Method::GET).f(index))
         .resource("/api/posts", |r| r.method(http::Method::GET).f(get_posts))
+        .resource("/api/posts", |r| r.method(http::Method::POST).with2(create_post))
 }
 
 fn main() {
