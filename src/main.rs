@@ -53,13 +53,11 @@ fn index(req: RequestWithState) -> Result<NamedFile> {
     Ok(NamedFile::open(Path::new("static/index.html"))?)
 }
 
-fn get_posts(req: RequestWithState) -> Result<String> {
-    println!("{}", 111);
+fn get_posts(req: RequestWithState) -> Result<Json<Vec<Post>>> {
     let posts_coll = &req.state().posts;
     let posts = get_posts_db(Some(0), Some(10), posts_coll);
     println!("{:?}", posts);
-//    Ok(Json(posts_coll));
-    Ok(String::from("Hello"))
+    Ok(Json(posts))
 }
 
 fn create_post(state: State<AppState>, info: Json<NewPost>) -> Result<Json<RetData<Option<String>>>> {

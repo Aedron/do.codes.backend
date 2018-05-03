@@ -22,7 +22,8 @@ pub struct Post {
 #[derive(Clone,Debug,Serialize,Deserialize)]
 pub struct Comment {
     pub created: i64,
-    pub title: String
+    pub username: Option<String>,
+    pub content: String
 }
 
 

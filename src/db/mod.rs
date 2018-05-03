@@ -1,14 +1,13 @@
-
 use bson::{
-    Bson, ordered::{OrderedDocument},
-    to_bson, UtcDateTime
+    Bson, ordered::OrderedDocument,
+    to_bson, UtcDateTime,
 };
 use mongodb::{Client, ThreadedClient};
 use mongodb::db::ThreadedDatabase;
 use mongodb::{
     coll::{
         Collection,
-        options::{FindOptions, CursorType}
+        options::{FindOptions, CursorType},
     }
 };
 use dotenv::dotenv;
@@ -22,7 +21,6 @@ use self::models::{NewPost, Post, Comment, PostResponse};
 use self::utils::get_timestamp;
 
 
-
 pub fn get_coll(coll_name: &str) -> Collection {
     dotenv().ok();
     let db_address = env::var("DB_ADDRESS").unwrap();
@@ -31,7 +29,7 @@ pub fn get_coll(coll_name: &str) -> Collection {
 
     let client = Client::connect(
         &db_address,
-        db_port.parse().unwrap()
+        db_port.parse().unwrap(),
     ).expect("Failed to initialize client.");
     let coll = client.db(&db_name).collection(coll_name);
 
@@ -48,6 +46,22 @@ pub fn get_posts(count: Option<i32>, skip: Option<i64>, collection: &Collection)
     let mut result: Vec<Post> = vec![];
     for post in posts {
         if let Ok(doc) = post {
+            let comments: Option<Vec<Comment>> = match doc.get_array("comments") {
+                Ok(c) => Some(
+                    c.iter().map(|i| {
+                        let c = i.as_document().unwrap();
+                        Comment {
+                            created: c.get_i64("created").unwrap(),
+                            username: match c.get_str("username") {
+                                Ok(i) => Some(i.to_string()),
+                                _ => None
+                            },
+                            content: c.get_str("content").unwrap().to_string(),
+                        }
+                    }).collect()
+                ),
+                _ => None
+            };
             let i = Post {
                 created: doc.get_i64("created").unwrap(),
                 edited: doc.get_i64("edited").ok(),
@@ -55,7 +69,7 @@ pub fn get_posts(count: Option<i32>, skip: Option<i64>, collection: &Collection)
                 tags: doc.get_array("tags").unwrap().iter()
                     .map(|i| i.as_str().unwrap().to_string()).collect(),
                 content: doc.get_str("content").unwrap().to_string(),
-                comments: None
+                comments
             };
             result.push(i);
         }
