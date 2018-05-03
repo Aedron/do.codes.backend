@@ -53,11 +53,16 @@ fn index(req: RequestWithState) -> Result<NamedFile> {
     Ok(NamedFile::open(Path::new("static/index.html"))?)
 }
 
-fn get_posts(req: RequestWithState) -> Result<Json<Vec<Post>>> {
+fn get_posts(req: RequestWithState) -> Result<Json<RetData<Vec<Post>>>> {
     let posts_coll = &req.state().posts;
     let posts = get_posts_db(Some(0), Some(10), posts_coll);
     println!("{:?}", posts);
-    Ok(Json(posts))
+    let ret = RetData {
+        code: 0,
+        msg: Some(String::from("success")),
+        data: Some(posts)
+    };
+    Ok(Json(ret))
 }
 
 fn create_post(state: State<AppState>, info: Json<NewPost>) -> Result<Json<RetData<Option<String>>>> {
@@ -69,7 +74,7 @@ fn create_post(state: State<AppState>, info: Json<NewPost>) -> Result<Json<RetDa
     create_post_db(&post, &state.posts);
     let ret = RetData {
         code: 0,
-        msg: Some(String::from("Success")),
+        msg: Some(String::from("success")),
         data: None
     };
     Ok(Json(ret))
@@ -80,9 +85,13 @@ fn create_app() -> App<AppState> {
         posts: get_coll("posts")
     };
     App::with_state(app_state)
-        .resource("/", |r| r.method(http::Method::GET).f(index))
-        .resource("/api/posts", |r| r.method(http::Method::GET).f(get_posts))
-        .resource("/api/posts", |r| r.method(http::Method::POST).with2(create_post))
+        .resource("/", |r| {
+            r.method(http::Method::GET).f(index);
+        })
+        .resource("/api/posts", |r| {
+            r.method(http::Method::GET).f(get_posts);
+            r.method(http::Method::POST).with2(create_post);
+        })
 }
 
 fn main() {
