@@ -46,6 +46,9 @@ pub fn get_posts(count: Option<i32>, skip: Option<i64>, collection: &Collection)
     let mut result: Vec<Post> = vec![];
     for post in posts {
         if let Ok(doc) = post {
+            let tags = doc
+                .get_array("tags").unwrap().iter()
+                .map(|i| i.as_str().unwrap().to_string()).collect();
             let comments: Option<Vec<Comment>> = match doc.get_array("comments") {
                 Ok(c) => Some(
                     c.iter().map(|i| {
@@ -66,10 +69,8 @@ pub fn get_posts(count: Option<i32>, skip: Option<i64>, collection: &Collection)
                 created: doc.get_i64("created").unwrap(),
                 edited: doc.get_i64("edited").ok(),
                 title: doc.get_str("title").unwrap().to_string(),
-                tags: doc.get_array("tags").unwrap().iter()
-                    .map(|i| i.as_str().unwrap().to_string()).collect(),
                 content: doc.get_str("content").unwrap().to_string(),
-                comments
+                tags, comments
             };
             result.push(i);
         }
