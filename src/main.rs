@@ -96,7 +96,7 @@ fn create_app() -> App<AppState> {
 
 fn main() {
     HttpServer::new(create_app)
-        .bind("127.0.0.1:8088").expect("Can not bind to 127.0.0.1:0")
+        .bind("127.0.0.1:8087").expect("Can not bind to 127.0.0.1:8087")
         .threads(4)
         .run();
 }
