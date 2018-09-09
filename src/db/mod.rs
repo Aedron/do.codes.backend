@@ -13,6 +13,7 @@ use mongodb::{
 use dotenv::dotenv;
 use std::env;
 use std::option::Option;
+use std::iter::FromIterator;
 
 pub mod models;
 pub mod utils;
@@ -65,11 +66,14 @@ pub fn get_posts(count: Option<i32>, skip: Option<i64>, collection: &Collection)
                 ),
                 _ => None
             };
+
             let i = Post {
+                id: Some(doc.get_object_id("_id").unwrap().to_hex()),
                 created: doc.get_i64("created").unwrap(),
                 edited: doc.get_i64("edited").ok(),
                 title: doc.get_str("title").unwrap().to_string(),
                 content: doc.get_str("content").unwrap().to_string(),
+                cover: doc.get_str("cover").unwrap().to_string(),
                 tags, comments
             };
             result.push(i);
@@ -84,6 +88,7 @@ pub fn create_post(post: &NewPost, collection: &Collection) {
         "title": post.title.clone(),
         "tags": to_bson(&post.tags).unwrap(),
         "content": post.content.clone(),
+        "cover": post.cover.clone(),
     };
 
     collection

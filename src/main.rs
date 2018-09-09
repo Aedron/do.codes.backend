@@ -69,7 +69,8 @@ fn create_post(state: State<AppState>, info: Json<NewPost>) -> Result<Json<RetDa
     let post = NewPost {
         title: info.title.clone(),
         tags: info.tags.clone(),
-        content: info.content.clone()
+        content: info.content.clone(),
+        cover: info.cover.clone()
     };
     create_post_db(&post, &state.posts);
     let ret = RetData {
