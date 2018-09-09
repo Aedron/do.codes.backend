@@ -7,15 +7,18 @@ pub struct NewPost {
     pub title: String,
     pub tags: Vec<String>,
     pub content: String,
+    pub cover: String
 }
 
 #[derive(Clone,Debug,Serialize,Deserialize)]
 pub struct Post {
+    pub id: Option<String>,
     pub created: i64,
     pub edited: Option<i64>,
     pub title: String,
     pub tags: Vec<String>,
     pub content: String,
+    pub cover: String,
     pub comments: Option<Vec<Comment>>
 }
 
