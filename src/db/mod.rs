@@ -1,6 +1,7 @@
 use bson::{
     Bson, ordered::OrderedDocument,
     to_bson, UtcDateTime,
+    oid::ObjectId,
 };
 use mongodb::{Client, ThreadedClient};
 use mongodb::db::ThreadedDatabase;
@@ -74,7 +75,8 @@ pub fn get_posts(count: Option<i32>, skip: Option<i64>, collection: &Collection)
                 title: doc.get_str("title").unwrap().to_string(),
                 content: doc.get_str("content").unwrap().to_string(),
                 cover: doc.get_str("cover").unwrap().to_string(),
-                tags, comments
+                tags,
+                comments,
             };
             result.push(i);
         }
@@ -84,41 +86,47 @@ pub fn get_posts(count: Option<i32>, skip: Option<i64>, collection: &Collection)
 
 pub fn get_post(id: &str, collection: &Collection) -> Option<Post> {
     let mut post = collection
-        .find_one(Some(doc!{ _id: id }), None)
+        .find_one(
+            Some(doc! { "_id": ObjectId::with_string(id).unwrap() }),
+            None)
         .ok()
         .unwrap();
-    if let Ok(doc) = post {
-        let tags = doc
-            .get_array("tags").unwrap().iter()
-            .map(|i| i.as_str().unwrap().to_string()).collect();
-        let comments: Option<Vec<Comment>> = match doc.get_array("comments") {
-            Ok(c) => Some(
-                c.iter().map(|i| {
-                    let c = i.as_document().unwrap();
-                    Comment {
-                        created: c.get_i64("created").unwrap(),
-                        username: match c.get_str("username") {
-                            Ok(i) => Some(i.to_string()),
-                            _ => None
-                        },
-                        content: c.get_str("content").unwrap().to_string(),
-                    }
-                }).collect()
-            ),
-            _ => None
-        };
+    println!("{:?}", post);
+    match post {
+        Some(doc) => {
+            let tags = doc
+                .get_array("tags").unwrap().iter()
+                .map(|i| i.as_str().unwrap().to_string()).collect();
+            let comments: Option<Vec<Comment>> = match doc.get_array("comments") {
+                Ok(c) => Some(
+                    c.iter().map(|i| {
+                        let c = i.as_document().unwrap();
+                        Comment {
+                            created: c.get_i64("created").unwrap(),
+                            username: match c.get_str("username") {
+                                Ok(i) => Some(i.to_string()),
+                                _ => None
+                            },
+                            content: c.get_str("content").unwrap().to_string(),
+                        }
+                    }).collect()
+                ),
+                _ => None
+            };
 
-        return Some(Post {
-            id: Some(doc.get_object_id("_id").unwrap().to_hex()),
-            created: doc.get_i64("created").unwrap(),
-            edited: doc.get_i64("edited").ok(),
-            title: doc.get_str("title").unwrap().to_string(),
-            content: doc.get_str("content").unwrap().to_string(),
-            cover: doc.get_str("cover").unwrap().to_string(),
-            tags, comments
-        });
+            return Some(Post {
+                id: Some(doc.get_object_id("_id").unwrap().to_hex()),
+                created: doc.get_i64("created").unwrap(),
+                edited: doc.get_i64("edited").ok(),
+                title: doc.get_str("title").unwrap().to_string(),
+                content: doc.get_str("content").unwrap().to_string(),
+                cover: doc.get_str("cover").unwrap().to_string(),
+                tags,
+                comments,
+            });
+        }
+        None => None
     }
-    None
 }
 
 pub fn create_post(post: &NewPost, collection: &Collection) {
