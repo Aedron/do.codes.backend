@@ -28,14 +28,17 @@ use actix_web::{
     fs, http::Method, State,
 };
 use db::{
-    get_coll, create_post as create_post_db, get_posts as get_posts_db,
+    get_coll,
+    create_post as create_post_db,
+    get_posts as get_posts_db,
+    get_post as get_post_db,
     models::{NewPost, Post, Comment},
     utils::get_timestamp,
 };
 
 
 struct AppState {
-    posts: Collection
+    posts_collection: Collection
 }
 
 #[derive(Deserialize, Serialize)]
@@ -53,8 +56,22 @@ type RequestWithState = HttpRequest<AppState>;
 //    HttpResponse::Ok(NamedFile::open(Path::new("static/index.html"))?)
 //}
 
+fn get_post(req: RequestWithState) -> Result<Json<RetData<Post>>> {
+    let posts_coll = &req.state().posts_collection;
+    let id = req.match_info().get("id").unwrap();
+    let post = get_post_db(id, posts_coll);
+//    let post: Option<Post> = None;
+    println!("Id: {:?}\nPost: {:?}", id, post);
+    let ret = RetData {
+        code: 0,
+        msg: Some(String::from("success")),
+        data: post
+    };
+    Ok(Json(ret))
+}
+
 fn get_posts(req: RequestWithState) -> Result<Json<RetData<Vec<Post>>>> {
-    let posts_coll = &req.state().posts;
+    let posts_coll = &req.state().posts_collection;
     let posts = get_posts_db(Some(0), Some(10), posts_coll);
     println!("{:?}", posts);
     let ret = RetData {
@@ -72,7 +89,7 @@ fn create_post(state: State<AppState>, info: Json<NewPost>) -> Result<Json<RetDa
         content: info.content.clone(),
         cover: info.cover.clone(),
     };
-    create_post_db(&post, &state.posts);
+    create_post_db(&post, &state.posts_collection);
     let ret = RetData {
         code: 0,
         msg: Some(String::from("success")),
@@ -81,18 +98,12 @@ fn create_post(state: State<AppState>, info: Json<NewPost>) -> Result<Json<RetDa
     Ok(Json(ret))
 }
 
-//fn create_app() -> Vec<Box<server::HttpHandler>> {
-//    let app_state = AppState {
-//        posts: get_coll("posts")
-//    };
-//
-//}
 
 fn main() {
     let mut listenfd = ListenFd::from_env();
     let mut server = server::new(|| {
         let app_state = AppState {
-            posts: get_coll("posts")
+            posts_collection: get_coll("posts")
         };
 
         vec![
@@ -101,6 +112,9 @@ fn main() {
                 .resource("/posts", |r| {
                     r.method(http::Method::GET).f(get_posts);
                     r.method(http::Method::POST).with2(create_post);
+                })
+                .resource("/post/{id}", |r| {
+                    r.method(http::Method::GET).f(get_post);
                 })
                 .boxed(),
             App::new()
