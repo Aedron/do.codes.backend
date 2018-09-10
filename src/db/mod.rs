@@ -82,6 +82,14 @@ pub fn get_posts(count: Option<i32>, skip: Option<i64>, collection: &Collection)
     result
 }
 
+//pub fn get_post(id: &str) -> Option<Post> {]
+//    let total = collection.count(None, None);
+//    let mut posts = collection
+//        .find({ _id: id }, None)
+//        .ok()
+//        .unwrap();
+//}
+
 pub fn create_post(post: &NewPost, collection: &Collection) {
     let doc = doc! {
         "created": get_timestamp(),

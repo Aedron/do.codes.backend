@@ -4,6 +4,7 @@ version = "0.1.0"
 authors = ["胡青杨 <i@do.codes>"]
 
 [dependencies]
+listenfd = "0.3"
 actix = "0.5"
 actix-web = "0.5"
 bson = "0.12"
