@@ -1,25 +1,15 @@
-use bson::{
-    Bson, ordered::OrderedDocument,
-    to_bson, UtcDateTime,
-    oid::ObjectId,
-};
+use bson::{to_bson, oid::ObjectId};
 use mongodb::{Client, ThreadedClient};
 use mongodb::db::ThreadedDatabase;
-use mongodb::{
-    coll::{
-        Collection,
-        options::{FindOptions, CursorType},
-    }
-};
+use mongodb::{coll::{Collection}};
 use dotenv::dotenv;
 use std::env;
 use std::option::Option;
-use std::iter::FromIterator;
 
 pub mod models;
 pub mod utils;
 
-use self::models::{NewPost, Post, Comment, PostResponse};
+use self::models::{NewPost, Post, Comment};
 use self::utils::get_timestamp;
 
 
@@ -40,7 +30,7 @@ pub fn get_coll(coll_name: &str) -> Collection {
 
 pub fn get_posts(count: Option<i32>, skip: Option<i64>, collection: &Collection) -> Vec<Post> {
     let total = collection.count(None, None);
-    let mut posts = collection
+    let posts = collection
         .find(None, None)
         .ok()
         .unwrap();
@@ -85,7 +75,7 @@ pub fn get_posts(count: Option<i32>, skip: Option<i64>, collection: &Collection)
 }
 
 pub fn get_post(id: &str, collection: &Collection) -> Option<Post> {
-    let mut post = collection
+    let post = collection
         .find_one(
             Some(doc! { "_id": ObjectId::with_string(id).unwrap() }),
             None)

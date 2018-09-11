@@ -1,6 +1,3 @@
-use actix::*;
-use actix_web::*;
-
 
 #[derive(Clone,Debug,Serialize,Deserialize)]
 pub struct NewPost {

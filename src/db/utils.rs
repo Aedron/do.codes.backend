@@ -1,7 +1,5 @@
 
-use chrono::prelude::*;
-use chrono::{DateTime, TimeZone, NaiveDateTime, Utc};
-
+use chrono::{DateTime, Utc};
 
 
 pub fn get_timestamp() -> i64 {

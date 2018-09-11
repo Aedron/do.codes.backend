@@ -15,25 +15,18 @@ extern crate listenfd;
 pub mod db;
 
 use listenfd::ListenFd;
-use std::{
-    boxed::Box,
-    path::Path,
-    collections::HashMap,
-};
-use futures::future::{Future, result};
-use mongodb::coll::{Collection, options::FindOptions};
+use mongodb::coll::{Collection};
 use actix_web::{
-    server, http, Error, Json,
-    App, HttpRequest, HttpResponse, Result,
-    fs, http::Method, State,
+    server, http, Json,
+    App, HttpRequest, Result,
+    fs, State,
 };
 use db::{
     get_coll,
     create_post as create_post_db,
     get_posts as get_posts_db,
     get_post as get_post_db,
-    models::{NewPost, Post, Comment},
-    utils::get_timestamp,
+    models::{NewPost, Post},
 };
 
 
@@ -52,15 +45,10 @@ struct RetData<T> {
 type RequestWithState = HttpRequest<AppState>;
 
 
-//fn index(req: HttpRequest) -> Result<NamedFile> {
-//    HttpResponse::Ok(NamedFile::open(Path::new("static/index.html"))?)
-//}
-
-fn get_post(req: RequestWithState) -> Result<Json<RetData<Post>>> {
+fn get_post(req: &RequestWithState) -> Result<Json<RetData<Post>>> {
     let posts_coll = &req.state().posts_collection;
     let id = req.match_info().get("id").unwrap();
     let post = get_post_db(id, posts_coll);
-//    let post: Option<Post> = None;
     println!("Id: {:?}\nPost: {:?}", id, post);
     let ret = RetData {
         code: 0,
@@ -70,7 +58,7 @@ fn get_post(req: RequestWithState) -> Result<Json<RetData<Post>>> {
     Ok(Json(ret))
 }
 
-fn get_posts(req: RequestWithState) -> Result<Json<RetData<Vec<Post>>>> {
+fn get_posts(req: &RequestWithState) -> Result<Json<RetData<Vec<Post>>>> {
     let posts_coll = &req.state().posts_collection;
     let posts = get_posts_db(Some(0), Some(10), posts_coll);
     println!("{:?}", posts);
@@ -111,7 +99,7 @@ fn main() {
                 .prefix("/api")
                 .resource("/posts", |r| {
                     r.method(http::Method::GET).f(get_posts);
-                    r.method(http::Method::POST).with2(create_post);
+                    r.method(http::Method::POST).with(create_post);
                 })
                 .resource("/post/{id}", |r| {
                     r.method(http::Method::GET).f(get_post);
@@ -119,7 +107,7 @@ fn main() {
                 .boxed(),
             App::new()
                 .handler("/",
-                    fs::StaticFiles::new("./static").index_file("index.html"))
+                    fs::StaticFiles::new("./static").ok().unwrap().index_file("index.html"))
                 .boxed()
         ]
     });
@@ -127,7 +115,6 @@ fn main() {
     server
         .bind("127.0.0.1:8087")
         .expect("Can not bind to 127.0.0.1:8087")
-        .threads(4)
         .run();
 
 //    server = if let Some(l) = listenfd.take_tcp_listener(0).unwrap() {
