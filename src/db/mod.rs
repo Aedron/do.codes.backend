@@ -12,6 +12,7 @@ pub mod utils;
 use self::models::{NewPost, Post, Comment};
 use self::utils::get_timestamp;
 
+static POST_COLLECTION: Collection = get_coll("posts");
 
 pub fn get_coll(coll_name: &str) -> Collection {
     dotenv().ok();
@@ -28,9 +29,9 @@ pub fn get_coll(coll_name: &str) -> Collection {
     coll
 }
 
-pub fn get_posts(count: Option<i32>, skip: Option<i64>, collection: &Collection) -> Vec<Post> {
-    let total = collection.count(None, None);
-    let posts = collection
+pub fn get_posts(count: Option<i32>, skip: Option<i64>) -> Vec<Post> {
+    let total = POST_COLLECTION.count(None, None);
+    let posts = POST_COLLECTION
         .find(None, None)
         .ok()
         .unwrap();
@@ -74,8 +75,8 @@ pub fn get_posts(count: Option<i32>, skip: Option<i64>, collection: &Collection)
     result
 }
 
-pub fn get_post(id: &str, collection: &Collection) -> Option<Post> {
-    let post = collection
+pub fn get_post(id: &str) -> Option<Post> {
+    let post = POST_COLLECTION
         .find_one(
             Some(doc! { "_id": ObjectId::with_string(id).unwrap() }),
             None)
@@ -119,7 +120,7 @@ pub fn get_post(id: &str, collection: &Collection) -> Option<Post> {
     }
 }
 
-pub fn create_post(post: &NewPost, collection: &Collection) {
+pub fn create_post(post: &NewPost) {
     let doc = doc! {
         "created": get_timestamp(),
         "title": post.title.clone(),
@@ -128,7 +129,7 @@ pub fn create_post(post: &NewPost, collection: &Collection) {
         "cover": post.cover.clone(),
     };
 
-    collection
+    POST_COLLECTION
         .insert_one(doc, None)
         .ok()
         .expect("Failed to insert document.");
