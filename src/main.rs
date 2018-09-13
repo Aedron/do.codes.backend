@@ -2,6 +2,8 @@
 extern crate bson;
 #[macro_use]
 extern crate serde_derive;
+#[macro_use]
+extern crate lazy_static;
 extern crate serde;
 extern crate serde_json;
 extern crate chrono;
@@ -11,18 +13,12 @@ extern crate futures;
 extern crate actix_web;
 extern crate actix;
 extern crate listenfd;
-#[macro_use]
-extern crate lazy_static;
 
 pub mod db;
 pub mod api;
 
 use listenfd::ListenFd;
-use actix_web::{
-    server, http, Json,
-    App, HttpRequest, Result,
-    fs, State,
-};
+use actix_web::{server, http, App, fs};
 use api::{get_post, get_posts, create_post};
 
 

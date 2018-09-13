@@ -16,7 +16,7 @@ pub struct Post {
     pub tags: Vec<String>,
     pub content: String,
     pub cover: String,
-    pub comments: Option<Vec<Comment>>
+    pub comments: CommentResponse
 }
 
 #[derive(Clone,Debug,Serialize,Deserialize)]
@@ -33,4 +33,10 @@ pub struct PostResponse {
     pub count: u32,
     pub skip: u32,
     pub posts: Vec<Post>
+}
+
+#[derive(Clone,Debug,Serialize,Deserialize)]
+pub struct CommentResponse {
+    pub total: i32,
+    pub data: Option<Vec<Comment>>
 }

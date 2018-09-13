@@ -1,18 +1,13 @@
+pub mod models;
 
-use actix_web::{Json, Result, State, HttpRequest};
+use actix_web::{Json, Result, HttpRequest};
 use db::{
     create_post as create_post_db,
     get_posts as get_posts_db,
     get_post as get_post_db,
     models::{NewPost, Post},
 };
-
-
-pub mod models;
-
-use self::models::{
-    RetData
-};
+use self::models::{RetData};
 
 
 pub fn get_post(req: &HttpRequest) -> Result<Json<RetData<Post>>> {
@@ -26,7 +21,7 @@ pub fn get_post(req: &HttpRequest) -> Result<Json<RetData<Post>>> {
     Ok(Json(ret))
 }
 
-pub fn get_posts(req: &HttpRequest) -> Result<Json<RetData<Vec<Post>>>> {
+pub fn get_posts(_: &HttpRequest) -> Result<Json<RetData<Vec<Post>>>> {
     let posts = get_posts_db(Some(0), Some(10));
     println!("{:?}", posts);
     let ret = RetData {
