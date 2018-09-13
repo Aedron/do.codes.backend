@@ -7,6 +7,8 @@ use dotenv::dotenv;
 use std::{env, option::Option};
 use super::models::{Post, Comment, CommentResponse};
 
+
+
 pub fn get_timestamp() -> i64 {
     let utc: DateTime<Utc> = Utc::now();
     utc.timestamp()
