@@ -18,7 +18,6 @@ use self::models::{
 pub fn get_post(req: &HttpRequest) -> Result<Json<RetData<Post>>> {
     let id = req.match_info().get("id").unwrap();
     let post = get_post_db(id);
-    println!("Id: {:?}\nPost: {:?}", id, post);
     let ret = RetData {
         code: 0,
         msg: Some(String::from("success")),

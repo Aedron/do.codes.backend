@@ -1,4 +1,4 @@
-use bson::{to_bson, oid::ObjectId};
+use bson::{to_bson, oid::ObjectId, Document};
 use mongodb::{Client, ThreadedClient};
 use mongodb::db::ThreadedDatabase;
 use mongodb::{coll::{Collection}};
@@ -12,7 +12,9 @@ pub mod utils;
 use self::models::{NewPost, Post, Comment};
 use self::utils::get_timestamp;
 
-static POST_COLLECTION: Collection = get_coll("posts");
+lazy_static! {
+    pub static ref POST_COLLECTION: Collection = get_coll("posts");
+}
 
 pub fn get_coll(coll_name: &str) -> Collection {
     dotenv().ok();
@@ -76,34 +78,20 @@ pub fn get_posts(count: Option<i32>, skip: Option<i64>) -> Vec<Post> {
 }
 
 pub fn get_post(id: &str) -> Option<Post> {
+    let id = match ObjectId::with_string(id) {
+        Ok(i) => Some(doc! { "_id": i }),
+        Err(_) => return None
+    };
     let post = POST_COLLECTION
-        .find_one(
-            Some(doc! { "_id": ObjectId::with_string(id).unwrap() }),
-            None)
+        .find_one(id, None)
         .ok()
         .unwrap();
-    println!("{:?}", post);
     match post {
         Some(doc) => {
             let tags = doc
                 .get_array("tags").unwrap().iter()
                 .map(|i| i.as_str().unwrap().to_string()).collect();
-            let comments: Option<Vec<Comment>> = match doc.get_array("comments") {
-                Ok(c) => Some(
-                    c.iter().map(|i| {
-                        let c = i.as_document().unwrap();
-                        Comment {
-                            created: c.get_i64("created").unwrap(),
-                            username: match c.get_str("username") {
-                                Ok(i) => Some(i.to_string()),
-                                _ => None
-                            },
-                            content: c.get_str("content").unwrap().to_string(),
-                        }
-                    }).collect()
-                ),
-                _ => None
-            };
+            let comments: Vec<Comment> = get_comments(doc);
 
             return Some(Post {
                 id: Some(doc.get_object_id("_id").unwrap().to_hex()),
@@ -133,4 +121,23 @@ pub fn create_post(post: &NewPost) {
         .insert_one(doc, None)
         .ok()
         .expect("Failed to insert document.");
+}
+
+fn get_comments(doc: Document) -> Vec<Comment> {
+    match doc.get_array("comments") {
+        Ok(c) => Some(
+            c.iter().map(|i| {
+                let c = i.as_document().unwrap();
+                Comment {
+                    created: c.get_i64("created").unwrap(),
+                    username: match c.get_str("username") {
+                        Ok(i) => Some(i.to_string()),
+                        _ => None
+                    },
+                    content: c.get_str("content").unwrap().to_string(),
+                }
+            }).collect()
+        ),
+        _ => vec![]
+    }
 }

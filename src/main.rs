@@ -11,6 +11,8 @@ extern crate futures;
 extern crate actix_web;
 extern crate actix;
 extern crate listenfd;
+#[macro_use]
+extern crate lazy_static;
 
 pub mod db;
 pub mod api;
