@@ -5,6 +5,7 @@ use mongodb::{coll::Collection, ThreadedClient};
 use mongodb::db::ThreadedDatabase;
 use bson::{to_bson, oid::ObjectId};
 use self::models::{NewPost, Post};
+use super::utils::get_timestamp;
 
 
 
@@ -44,7 +45,7 @@ pub fn get_post(id: &str) -> Option<Post> {
 
 pub fn create_post(post: &NewPost) {
     let doc = doc! {
-        "created": utils::get_timestamp(),
+        "created": get_timestamp(),
         "title": post.title.clone(),
         "tags": to_bson(&post.tags).unwrap(),
         "content": post.content.clone(),

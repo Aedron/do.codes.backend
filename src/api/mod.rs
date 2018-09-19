@@ -1,5 +1,6 @@
 pub mod models;
-
+use dotenv::dotenv;
+use std::{env, option::Option};
 use actix_web::{Json, Result, HttpRequest};
 use db::{
     create_post as create_post_db,
@@ -8,6 +9,8 @@ use db::{
     models::{NewPost, Post},
 };
 use self::models::{RetData};
+use qiniu;
+use super::utils::get_timestamp;
 
 
 pub fn get_post(req: &HttpRequest) -> Result<Json<RetData<Post>>> {
@@ -44,6 +47,23 @@ pub fn create_post(info: Json<NewPost>) -> Result<Json<RetData<Option<String>>>>
         code: 0,
         msg: Some(String::from("success")),
         data: None,
+    };
+    Ok(Json(ret))
+}
+
+pub fn get_upload_token(req: &HttpRequest) -> Result<Json<RetData<String>>> {
+    dotenv().ok();
+    let access_key = env::var("QINIU_ACCESS_KEY").unwrap();
+    let secret_key = env::var("QINIU_SECRET_KEY").unwrap();
+    let upload_scope = env::var("QINIU_UPLOAD_SCOPE").unwrap();
+    let config = qiniu::Config::new(access_key, secret_key);
+    let deadline = get_timestamp() + 60 * 10 * 1000;
+    let token = qiniu::PutPolicy::new(upload_scope, deadline as u32)
+        .generate_uptoken(&config);
+    let ret = RetData {
+        code: 0,
+        msg: Some(String::from("success")),
+        data: Some(token)
     };
     Ok(Json(ret))
 }

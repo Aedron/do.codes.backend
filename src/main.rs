@@ -13,13 +13,15 @@ extern crate futures;
 extern crate actix_web;
 extern crate actix;
 extern crate listenfd;
+extern crate qiniu;
 
 pub mod db;
 pub mod api;
+pub mod utils;
 
 use listenfd::ListenFd;
 use actix_web::{server, http, App, fs};
-use api::{get_post, get_posts, create_post};
+use api::{get_post, get_posts, create_post, get_upload_token};
 
 
 
@@ -35,6 +37,9 @@ fn main() {
                 })
                 .resource("/post/{id}", |r| {
                     r.method(http::Method::GET).f(get_post);
+                })
+                .resource("/upload_token", |r| {
+                    r.method(http::Method::GET).f(get_upload_token);
                 })
                 .boxed(),
             App::new()

@@ -1,4 +1,3 @@
-use chrono::{DateTime, Utc};
 use bson::{Document};
 use mongodb::{Client, ThreadedClient};
 use mongodb::{coll::Collection};
@@ -8,11 +7,6 @@ use std::{env, option::Option};
 use super::models::{Post, Comment, CommentResponse};
 
 
-
-pub fn get_timestamp() -> i64 {
-    let utc: DateTime<Utc> = Utc::now();
-    utc.timestamp()
-}
 
 pub fn get_coll(coll_name: &str) -> Collection {
     dotenv().ok();
