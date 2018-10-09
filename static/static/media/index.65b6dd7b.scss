@@ -1,0 +1,77 @@
+
+@import "../../style/variable";
+
+.post-edit {
+  position: fixed;
+  width: 660px;
+  height: 100%;
+  padding: 0;
+  margin: 0 calc(50% - 330px);
+  overflow-y: auto;
+  .title-editor, .tags-editor {
+    display: block;
+    width: 100%;
+    border: 0;
+    font-weight: 600;
+    font-synthesis: style;
+    outline: none;
+    box-shadow: none;
+  }
+  .title-editor {
+    height: 44px;
+    font-size: 24px;
+    margin-top: 15px;
+  }
+  .tags-editor {
+    height: 30px;
+    font-size: 14px;
+    margin-bottom: 15px;
+    .react-tagsinput-input, .react-tagsinput-tag {
+      font-size: 16px;
+    }
+    .react-tagsinput-input {
+      width: 160px;
+    }
+    .react-tagsinput-tag {
+      background-color: $opacity;
+      color: gray;
+      border-color: gray;
+    }
+  }
+  .cover-upload {
+    margin-bottom: 20px;
+    background: #f5f5f5;
+    color: gray;
+    min-height: 220px;
+    text-align: center;
+    width: 100%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    justify-content: space-around;
+    border: 1px solid #ebebeb;
+    border-radius: 4px;
+    padding: 60px 0;
+    background-size: cover;
+    background-position: center;
+    &.uploaded > * {
+      display: none;
+    }
+    i {
+      font-size: 32px;
+      opacity: 0.8;
+    }
+    p {
+      font-size: 13px;
+      letter-spacing: 0.07em;
+      transition: all ease 300ms;
+      transform: translateY(-100%);
+      opacity: 0;
+    }
+    &:hover p {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+}
